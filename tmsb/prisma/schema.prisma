@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  REVIEW
+  DONE
+  ARCHIVED
+  CANCELED
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  name           String
+  email          String        @unique
+  password       String?
+  googleId       String?
+  githubId       String?
+  stack          String?
+  projects       Project[]     @relation("OwnerProjects")
+  memberProjects Project[]     @relation("ProjectMembers")
+  tasks          Task[]
+  workSessions   WorkSession[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Project {
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  status        Status        @default(TODO)
+  ownerId       Int
+  estimatedTime Int?
+  actualTime    Int?
+  completedAt   DateTime?
+  owner         User          @relation("OwnerProjects", fields: [ownerId], references: [id])
+  members       User[]        @relation("ProjectMembers")
+  tasks         Task[]
+  tags          Tag[]         @relation("ProjectTags")
+  workSessions  WorkSession[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Task {
+  id            Int           @id @default(autoincrement())
+  title         String
+  content       String?
+  status        Status        @default(TODO)
+  userId        Int
+  projectId     Int?
+  estimatedTime Int?
+  actualTime    Int?
+  completedAt   DateTime?
+  user          User          @relation(fields: [userId], references: [id])
+  project       Project?      @relation(fields: [projectId], references: [id])
+  tags          Tag[]         @relation("TaskTags")
+  workSessions  WorkSession[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Tag {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  tasks    Task[]    @relation("TaskTags")
+  projects Project[] @relation("ProjectTags")
+}
+
+model WorkSession {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  taskId      Int?
+  projectId   Int?
+  status      Status
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?
+  description String?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  task        Task?     @relation(fields: [taskId], references: [id])
+  project     Project?  @relation(fields: [projectId], references: [id])
+}
