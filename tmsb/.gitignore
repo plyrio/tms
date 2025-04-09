@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+#pastas
+/lixo
+
 # Logs
 logs
 *.log
